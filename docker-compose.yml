@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      TARGETS: "https://pk.edu.pl"
+      POLL_INTERVAL: "60s"
+      DB_PATH: "/data/pk-status.db"
+      PORT: "8080"
+    volumes:
+      - pkdata:/data
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pkdata:

@@ -1,0 +1,13 @@
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.astro/
+
+# Go / SQLite
+*.db
+*.db-shm
+*.db-wal
+backend/server
+
+# IDE
+.idea/

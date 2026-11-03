@@ -10,4 +10,5 @@ frontend/.astro/
 backend/server
 
 # IDE
-.idea/
+.idea
+.zed

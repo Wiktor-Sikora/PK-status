@@ -8,7 +8,7 @@ Tailwind frontend shows a live status card and a latency history chart.
 ## Stack
 
 - **Backend** — Go, stdlib `net/http`, `modernc.org/sqlite` (pure Go, no CGO).
-- **Frontend** — Astro + React islands + Tailwind v4, charts via recharts.
+- **Frontend** — Bun, Astro + React islands + Tailwind v4, charts via recharts.
 - **Delivery** — Docker (Alpine images), orchestrated with docker-compose. nginx
   serves the static frontend and reverse-proxies `/api/*` to the backend.
 
@@ -24,12 +24,13 @@ Then open http://localhost:8080.
 
 | Variable        | Default                 | Description                             |
 | --------------- | ----------------------- | --------------------------------------- |
-| `TARGETS`       | `https://pk.edu.pl`     | Comma-separated list of URLs to check.  |
+| `TARGETS`       | `https://pk.edu.pl`     | Comma-separated `name=url` entries (bare `url` uses the host as name). |
 | `POLL_INTERVAL` | `60s`                   | How often each target is checked.       |
 | `DB_PATH`       | `/data/pk-status.db`    | SQLite file path (mounted volume).      |
 | `PORT`          | `8080`                  | Backend HTTP port.                      |
 
-Add more checkpoints later by extending `TARGETS` in `docker-compose.yml`.
+Add more checkpoints by extending `TARGETS` in `docker-compose.yml`, e.g.
+`biblioteka=https://www.biblos.pk.edu.pl,dziekanat=https://ehms.pk.edu.pl`.
 
 ## API
 
@@ -44,5 +45,5 @@ Add more checkpoints later by extending `TARGETS` in `docker-compose.yml`.
 cd backend && go run .            # serves on :8080, writes ./pk-status.db by default via env
 
 # Frontend
-cd frontend && npm install && npm run dev
+cd frontend && bun install && bun --bun run dev
 ```

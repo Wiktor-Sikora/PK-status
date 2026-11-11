@@ -30,12 +30,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	scheduler := checker.NewScheduler(cfg.Targets, cfg.PollInterval, store)
+	scheduler := checker.NewScheduler(cfg.URLs(), cfg.PollInterval, store)
 	go scheduler.Run(ctx)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: api.Handler(store),
+		Handler: api.Handler(store, cfg.Names()),
 	}
 
 	go func() {

@@ -2,7 +2,12 @@ services:
   backend:
     build: ./backend
     environment:
-      TARGETS: "https://pk.edu.pl"
+      TARGETS: >-
+        pk.edu.pl=https://pk.edu.pl,
+        biblioteka=https://www.biblos.pk.edu.pl,
+        dziekanat=https://ehms.pk.edu.pl,
+        eclipse=https://eclipse.elektron.pk.edu.pl,
+        plany=https://plany.wieik.pk.edu.pl
       POLL_INTERVAL: "60s"
       DB_PATH: "/data/pk-status.db"
       PORT: "8080"

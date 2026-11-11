@@ -7,7 +7,7 @@ const REFRESH_MS = 30_000;
 
 export default function Dashboard() {
   const [status, setStatus] = useState<CheckResult[]>([]);
-  const [history, setHistory] = useState<CheckResult[]>([]);
+  const [history, setHistory] = useState<Record<string, CheckResult[]>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,11 +21,10 @@ export default function Dashboard() {
         setStatus(latest);
         setError(null);
 
-        // For now there is a single primary target; chart the first one.
-        if (latest.length > 0) {
-          const hist = await fetchHistory(latest[0].target, 100);
-          if (active) setHistory(hist);
-        }
+        const entries = await Promise.all(
+          latest.map(async (s) => [s.target, await fetchHistory(s.target, 100)] as const),
+        );
+        if (active) setHistory(Object.fromEntries(entries));
       } catch (e) {
         if (active) setError(e instanceof Error ? e.message : "failed to load");
       } finally {
@@ -60,9 +59,10 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {status.map((s) => (
-        <StatusCard key={s.target} result={s} />
+        <StatusCard key={s.target} result={s}>
+          <LatencyChart history={history[s.target] ?? []} />
+        </StatusCard>
       ))}
-      <LatencyChart history={history} />
     </div>
   );
 }

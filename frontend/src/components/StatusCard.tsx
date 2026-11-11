@@ -1,15 +1,5 @@
 import type { CheckResult } from "../lib/api";
-
-function relativeTime(iso: string): string {
-  const then = new Date(iso).getTime();
-  const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
-  if (secs < 60) return `${secs}s ago`;
-  const mins = Math.round(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.round(hrs / 24)}d ago`;
-}
+import { useState, type ReactNode } from "react";
 
 function hostOf(url: string): string {
   try {
@@ -19,17 +9,22 @@ function hostOf(url: string): string {
   }
 }
 
-export default function StatusCard({ result }: { result: CheckResult }) {
-  const up = result.ok;
-  const certWarn =
-    result.cert_days_left !== undefined && result.cert_days_left < 30;
+export default function StatusCard({
+  result,
+  children,
+}: {
+  result: CheckResult;
+  children?: ReactNode;
+}) {
+  const title = result.name || hostOf(result.target);
 
   return (
     <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-6 shadow-lg">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-3">
+        <Favicon host={hostOf(result.target)} label={title} />
+        <div className="min-w-0 flex-1">
           <h2 className="text-lg font-semibold text-slate-100">
-            {hostOf(result.target)}
+            {title}
           </h2>
           <a
             href={result.target}
@@ -40,39 +35,10 @@ export default function StatusCard({ result }: { result: CheckResult }) {
             {result.target}
           </a>
         </div>
-        <span
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${
-            up
-              ? "bg-emerald-500/15 text-emerald-400"
-              : "bg-rose-500/15 text-rose-400"
-          }`}
-        >
-          <span
-            className={`h-2.5 w-2.5 rounded-full ${
-              up ? "bg-emerald-400" : "bg-rose-400"
-            }`}
-          />
-          {up ? "Operational" : "Down"}
-        </span>
+        <dl className="shrink-0 text-right">
+          <Stat label="Latency" value={`${result.latency_ms} ms`} />
+        </dl>
       </div>
-
-      <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Latency" value={`${result.latency_ms} ms`} />
-        <Stat
-          label="HTTP"
-          value={result.status_code ? String(result.status_code) : "—"}
-        />
-        <Stat
-          label="Cert expires"
-          value={
-            result.cert_days_left !== undefined
-              ? `${result.cert_days_left}d`
-              : "—"
-          }
-          warn={certWarn}
-        />
-        <Stat label="Checked" value={relativeTime(result.checked_at)} />
-      </dl>
 
       {result.error && (
         <p className="mt-4 rounded-md bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
@@ -84,29 +50,42 @@ export default function StatusCard({ result }: { result: CheckResult }) {
           Issuer: {result.cert_issuer}
         </p>
       )}
+      {children}
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  warn,
-}: {
-  label: string;
-  value: string;
-  warn?: boolean;
-}) {
+// Favicons are stored as static files in public/favicons/<host>.png. When one
+// is missing, fall back to the first letter of the service name.
+function Favicon({ host, label }: { host: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <span
+        aria-hidden="true"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-slate-700 text-xl font-semibold uppercase text-slate-200"
+      >
+        {label.charAt(0)}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={`/favicons/${host}.png`}
+      alt=""
+      onError={() => setFailed(true)}
+      className="h-12 w-12 shrink-0 rounded-md object-contain"
+    />
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd
-        className={`mt-1 text-xl font-semibold ${
-          warn ? "text-amber-400" : "text-slate-100"
-        }`}
-      >
-        {value}
-      </dd>
+      <dd className="mt-1 text-xl font-semibold text-slate-100">{value}</dd>
     </div>
   );
 }

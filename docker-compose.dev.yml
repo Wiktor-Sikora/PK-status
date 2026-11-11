@@ -1,0 +1,20 @@
+# Dev override: frontend runs the Astro dev server with hot reload.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Edits under frontend/ are picked up instantly; no image rebuild needed.
+# Rebuild (and add -V to refresh node_modules) only after changing dependencies.
+services:
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    environment:
+      API_PROXY_TARGET: "http://backend:8080"
+      # Docker Desktop (incl. on Linux) runs containers in a VM, so file events
+      # from the bind mount don't arrive; poll instead.
+      WATCH_POLLING: "1"
+    volumes:
+      - ./frontend:/app
+      # Keep the container's own node_modules instead of the host's.
+      - /app/node_modules

@@ -40,10 +40,24 @@ Add more checkpoints by extending `TARGETS` in `docker-compose.yml`, e.g.
 
 ## Local development
 
+### With Docker (hot reload)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Open http://localhost:8080 as usual. The frontend runs the Astro dev server with
+`frontend/` bind-mounted, so edits show up instantly without rebuilding the image.
+After changing dependencies, rerun with `--build -V` to refresh `node_modules`.
+File watching uses polling (`WATCH_POLLING`) because Docker Desktop's VM doesn't
+forward file events from bind mounts.
+
+### Without Docker
+
 ```bash
 # Backend
 cd backend && go run .            # serves on :8080, writes ./pk-status.db by default via env
 
 # Frontend
-cd frontend && bun install && bun --bun run dev
+cd frontend && bun install && bun --bun run dev   # proxies /api to localhost:8080
 ```

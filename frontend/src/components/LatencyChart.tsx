@@ -8,17 +8,7 @@ import {
   YAxis,
 } from "recharts";
 import type { CheckResult } from "../lib/api";
-
-function relativeTime(iso: string): string {
-  const then = new Date(iso).getTime();
-  const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
-  if (secs < 60) return `${secs}s ago`;
-  const mins = Math.round(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.round(hrs / 24)}d ago`;
-}
+import { formatRelativeTime, useI18n } from "../lib/i18n";
 
 // 24-hour HH:MM, no seconds, regardless of the browser's locale.
 const timeFormat = new Intl.DateTimeFormat("en-GB", {
@@ -62,12 +52,13 @@ function buildChart(history: CheckResult[]): { data: Row[]; gapKeys: string[] } 
 }
 
 export default function LatencyChart({ history }: { history: CheckResult[] }) {
+  const { lang, t } = useI18n();
   const { data, gapKeys } = buildChart(history);
 
   if (data.length === 0) {
     return (
       <div className="mt-6 text-sm text-slate-400">
-        No history yet — waiting for the first checks.
+        {t("chart.empty")}
       </div>
     );
   }
@@ -76,12 +67,12 @@ export default function LatencyChart({ history }: { history: CheckResult[] }) {
     <div className="mt-6">
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Latency (ms)
+          {t("chart.title")}
         </h3>
         <p className="text-sm text-slate-400">
-          Checked{" "}
+          {t("chart.checked")}{" "}
           <span className="font-semibold text-slate-100">
-            {relativeTime(history[history.length - 1].checked_at)}
+            {formatRelativeTime(history[history.length - 1].checked_at, lang)}
           </span>
         </p>
       </div>
@@ -126,7 +117,7 @@ export default function LatencyChart({ history }: { history: CheckResult[] }) {
             <Line
               type="monotone"
               dataKey="latency"
-              name="latency"
+              name={t("chart.latency")}
               stroke="#34d399"
               strokeWidth={2}
               dot={false}

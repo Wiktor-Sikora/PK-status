@@ -1,5 +1,6 @@
 import type { CheckResult } from "../lib/api";
 import { useState, type ReactNode } from "react";
+import { useI18n } from "../lib/i18n";
 
 function hostOf(url: string): string {
   try {
@@ -16,6 +17,7 @@ export default function StatusCard({
   result: CheckResult;
   children?: ReactNode;
 }) {
+  const { t } = useI18n();
   const title = result.name || hostOf(result.target);
 
   return (
@@ -36,7 +38,7 @@ export default function StatusCard({
           </a>
         </div>
         <dl className="shrink-0 text-right">
-          <Stat label="Latency" value={`${result.latency_ms} ms`} />
+          <Stat label={t("card.latency")} value={`${result.latency_ms} ms`} />
         </dl>
       </div>
 
@@ -47,7 +49,7 @@ export default function StatusCard({
       )}
       {result.cert_issuer && (
         <p className="mt-4 text-xs text-slate-500">
-          Issuer: {result.cert_issuer}
+          {t("card.issuer", { issuer: result.cert_issuer })}
         </p>
       )}
       {children}

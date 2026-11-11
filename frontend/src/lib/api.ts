@@ -3,6 +3,7 @@
 
 export interface CheckResult {
   target: string;
+  name?: string;
   checked_at: string;
   status_code: number;
   ok: boolean;

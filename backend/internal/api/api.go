@@ -20,8 +20,9 @@ const (
 	maxHistoryLimit     = 1000
 )
 
-// Handler builds the HTTP handler exposing the status API.
-func Handler(store Store) http.Handler {
+// Handler builds the HTTP handler exposing the status API. names maps target
+// URLs to display names; /api/status only reports currently configured targets.
+func Handler(store Store, names map[string]string) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func Handler(store Store) http.Handler {
 			writeError(w, http.StatusInternalServerError, "failed to load status")
 			return
 		}
-		writeJSON(w, http.StatusOK, results)
+		writeJSON(w, http.StatusOK, withNames(results, names, true))
 	})
 
 	mux.HandleFunc("GET /api/history", func(w http.ResponseWriter, r *http.Request) {
@@ -60,10 +61,25 @@ func Handler(store Store) http.Handler {
 			writeError(w, http.StatusInternalServerError, "failed to load history")
 			return
 		}
-		writeJSON(w, http.StatusOK, results)
+		writeJSON(w, http.StatusOK, withNames(results, names, false))
 	})
 
 	return mux
+}
+
+// withNames fills in display names. When onlyKnown is set, results for targets
+// that are no longer configured are dropped.
+func withNames(results []checker.Result, names map[string]string, onlyKnown bool) []checker.Result {
+	out := results[:0]
+	for _, r := range results {
+		name, known := names[r.Target]
+		if onlyKnown && !known {
+			continue
+		}
+		r.Name = name
+		out = append(out, r)
+	}
+	return out
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

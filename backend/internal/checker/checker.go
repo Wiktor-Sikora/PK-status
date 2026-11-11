@@ -10,6 +10,7 @@ import (
 // Result is the outcome of a single check of one target.
 type Result struct {
 	Target       string     `json:"target"`
+	Name         string     `json:"name,omitempty"`
 	CheckedAt    time.Time  `json:"checked_at"`
 	StatusCode   int        `json:"status_code"`
 	OK           bool       `json:"ok"`

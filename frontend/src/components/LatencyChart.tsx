@@ -2,6 +2,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceArea,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -17,20 +18,20 @@ const timeFormat = new Intl.DateTimeFormat("en-GB", {
   hourCycle: "h23",
 });
 
-type Row = { time: string; latency: number | null; [gap: string]: number | string | null };
+type Row = { key: string; latency: number | null };
+type Gap = { start: string; end: string };
 
 // Builds chart rows. Checks with a TLS certificate form the solid "latency"
-// series. Each run of checks without a certificate becomes its own "gapN"
-// series holding only the two certified points around the run, drawn as a
-// dashed bridge. Runs at the very start or end have nothing to bridge to.
-function buildChart(history: CheckResult[]): { data: Row[]; gapKeys: string[] } {
+// series. Each run of checks without a certificate becomes a red band covering
+// that interval. Runs at the very start or end are clamped to the chart edge.
+function buildChart(history: CheckResult[]): { data: Row[]; gaps: Gap[] } {
   const hasCert = history.map((h) => h.cert_not_after !== undefined);
   const data: Row[] = history.map((h, i) => ({
-    time: timeFormat.format(new Date(h.checked_at)),
+    key: h.checked_at,
     latency: hasCert[i] ? h.latency_ms : null,
   }));
 
-  const gapKeys: string[] = [];
+  const gaps: Gap[] = [];
   let i = 0;
   while (i < history.length) {
     if (hasCert[i]) {
@@ -39,21 +40,16 @@ function buildChart(history: CheckResult[]): { data: Row[]; gapKeys: string[] } 
     }
     const start = i;
     while (i < history.length && !hasCert[i]) i++;
-    const before = start - 1;
-    const after = i;
-    if (before >= 0 && after < history.length) {
-      const key = `gap${gapKeys.length}`;
-      gapKeys.push(key);
-      data[before][key] = history[before].latency_ms;
-      data[after][key] = history[after].latency_ms;
-    }
+    const left = Math.max(start - 1, 0);
+    const right = Math.min(i, data.length - 1);
+    gaps.push({ start: data[left].key, end: data[right].key });
   }
-  return { data, gapKeys };
+  return { data, gaps };
 }
 
 export default function LatencyChart({ history }: { history: CheckResult[] }) {
   const { lang, t } = useI18n();
-  const { data, gapKeys } = buildChart(history);
+  const { data, gaps } = buildChart(history);
 
   if (data.length === 0) {
     return (
@@ -80,7 +76,22 @@ export default function LatencyChart({ history }: { history: CheckResult[] }) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 0, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 11 }} minTickGap={40} />
+            {gaps.map((gap) => (
+              <ReferenceArea
+                key={`${gap.start}-${gap.end}`}
+                x1={gap.start}
+                x2={gap.end}
+                fill="#ef4444"
+                fillOpacity={0.2}
+                stroke="none"
+              />
+            ))}
+            <XAxis
+              dataKey="key"
+              tickFormatter={(value: string) => timeFormat.format(new Date(value))}
+              tick={{ fill: "#94a3b8", fontSize: 11 }}
+              minTickGap={40}
+            />
             <YAxis
               width={40}
               tickLine={false}
@@ -93,6 +104,7 @@ export default function LatencyChart({ history }: { history: CheckResult[] }) {
               )}
             />
             <Tooltip
+              labelFormatter={(value) => timeFormat.format(new Date(String(value)))}
               contentStyle={{
                 background: "#0f172a",
                 border: "1px solid #334155",
@@ -100,20 +112,6 @@ export default function LatencyChart({ history }: { history: CheckResult[] }) {
                 color: "#e2e8f0",
               }}
             />
-            {gapKeys.map((key) => (
-              <Line
-                key={key}
-                type="linear"
-                dataKey={key}
-                stroke="#34d399"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={false}
-                connectNulls
-                tooltipType="none"
-                isAnimationActive={false}
-              />
-            ))}
             <Line
               type="monotone"
               dataKey="latency"

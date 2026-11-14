@@ -78,7 +78,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {visible.map((s) => (
         <StatusCard key={s.target} result={s}>
           <LatencyChart history={history[s.target] ?? []} />

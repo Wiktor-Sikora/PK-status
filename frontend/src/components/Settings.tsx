@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { CheckResult } from "../lib/api";
 import { useI18n } from "../lib/i18n";
-import { FACULTIES, facultyFor, hostOf, iconSrcFor } from "../lib/icons";
+import { CATEGORIES, categoryFor, hostOf, iconSrcFor } from "../lib/icons";
 import { setSettingsOpen, setTargetHidden, showAllTargets, useHiddenTargets } from "../lib/settings";
 
 interface Group {
@@ -12,18 +12,18 @@ interface Group {
 }
 
 function groupResults(results: CheckResult[]): Group[] {
-  const groups: Group[] = FACULTIES.map((faculty) => ({
-    key: faculty.key,
-    name: faculty.name,
-    icon: faculty.icon,
+  const groups: Group[] = CATEGORIES.map((category) => ({
+    key: category.key,
+    name: category.name,
+    icon: category.icon,
     results: [],
   }));
   const byKey = new Map(groups.map((group) => [group.key, group]));
   const other: Group = { key: "other", name: "", results: [] };
 
   for (const result of results) {
-    const faculty = facultyFor(result);
-    (faculty ? byKey.get(faculty.key)! : other).results.push(result);
+    const category = categoryFor(result);
+    (category ? byKey.get(category.key)! : other).results.push(result);
   }
 
   const ordered = groups.filter((group) => group.results.length > 0);

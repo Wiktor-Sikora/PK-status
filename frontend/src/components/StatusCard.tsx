@@ -14,7 +14,7 @@ export default function StatusCard({
   const title = result.name || hostOf(result.target);
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-6 shadow-lg">
+    <div className="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-800/60 p-6 shadow-lg">
       <div className="flex items-center gap-3">
         <Favicon src={iconSrcFor(result)} label={title} />
         <div className="min-w-0 flex-1">

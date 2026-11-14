@@ -13,6 +13,11 @@ export const LANGUAGE_NAMES: Record<Lang, string> = {
   pl: "Polski",
 };
 
+export const LANGUAGE_FLAGS: Record<Lang, string> = {
+  en: "🇬🇧",
+  pl: "🇵🇱",
+};
+
 const en = {
   "meta.description": "Live status of Politechnika Krakowska services",
   "header.subtitle": "Live status of Politechnika Krakowska services.",
@@ -21,6 +26,13 @@ const en = {
   "dashboard.error": "Could not reach the status API: {error}",
   "dashboard.errorFallback": "failed to load",
   "dashboard.empty": "No checks recorded yet.",
+  "dashboard.noSelection": "No sites selected. Open settings to choose which sites to show.",
+  "settings.open": "Settings",
+  "settings.title": "Settings",
+  "settings.description": "Choose which sites appear on the status page.",
+  "settings.showAll": "Show all",
+  "settings.close": "Done",
+  "settings.other": "Other",
   "card.latency": "Latency",
   "card.issuer": "Issuer: {issuer}",
   "chart.title": "Latency (ms)",
@@ -39,6 +51,14 @@ const pl: Record<MessageKey, string> = {
   "dashboard.error": "Nie udało się połączyć z API statusu: {error}",
   "dashboard.errorFallback": "błąd wczytywania",
   "dashboard.empty": "Brak zarejestrowanych sprawdzeń.",
+  "dashboard.noSelection":
+    "Nie wybrano żadnych serwisów. Otwórz ustawienia, aby wybrać serwisy do wyświetlenia.",
+  "settings.open": "Ustawienia",
+  "settings.title": "Ustawienia",
+  "settings.description": "Wybierz, które serwisy mają być widoczne na stronie statusu.",
+  "settings.showAll": "Pokaż wszystkie",
+  "settings.close": "Gotowe",
+  "settings.other": "Inne",
   "card.latency": "Opóźnienie",
   "card.issuer": "Wystawca: {issuer}",
   "chart.title": "Opóźnienie (ms)",

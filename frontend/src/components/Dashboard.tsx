@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { fetchHistory, fetchStatus, type CheckResult } from "../lib/api";
 import { useI18n } from "../lib/i18n";
+import { useHiddenTargets, useSettingsOpen } from "../lib/settings";
 import StatusCard from "./StatusCard";
 import LatencyChart from "./LatencyChart";
+import Settings from "./Settings";
 
 const REFRESH_MS = 30_000;
 
 export default function Dashboard() {
   const { t } = useI18n();
+  const hidden = useHiddenTargets();
+  const settingsOpen = useSettingsOpen();
   const [status, setStatus] = useState<CheckResult[]>([]);
   const [history, setHistory] = useState<Record<string, CheckResult[]>>({});
   // undefined = no error; null = error without a message (shown as a translated fallback)
@@ -56,12 +60,26 @@ export default function Dashboard() {
   }
 
   if (status.length === 0) {
-    return <p className="text-slate-400">{t("dashboard.empty")}</p>;
+    return settingsOpen ? (
+      <Settings results={status} />
+    ) : (
+      <p className="text-slate-400">{t("dashboard.empty")}</p>
+    );
+  }
+
+  if (settingsOpen) {
+    return <Settings results={status} />;
+  }
+
+  const visible = status.filter((s) => !hidden.has(s.target));
+
+  if (visible.length === 0) {
+    return <p className="text-slate-400">{t("dashboard.noSelection")}</p>;
   }
 
   return (
     <div className="space-y-6">
-      {status.map((s) => (
+      {visible.map((s) => (
         <StatusCard key={s.target} result={s}>
           <LatencyChart history={history[s.target] ?? []} />
         </StatusCard>

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "bun test src/lib"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",

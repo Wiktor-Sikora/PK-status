@@ -11,7 +11,7 @@ export function hostOf(url: string): string {
 export interface Category {
   key: string;
   name: string;
-  icon: string;
+  icon?: string;
   aliases?: string[];
 }
 
@@ -25,10 +25,16 @@ export const FACULTIES: Category[] = [
   { key: "wimif", name: "WIMiF", icon: "/favicons/WIMiF.svg", aliases: ["imf"] },
   { key: "wisie", name: "WISiE", icon: "/favicons/WISiE.svg" },
   { key: "wm", name: "WM", icon: "/favicons/WM.svg", aliases: ["mech"] },
+  { key: "sd", name: "SD", icon: "/favicons/SD.svg", aliases: ["szkoladoktorska"] },
 ];
 
 export const SITE_CATEGORIES: Category[] = [
   { key: "csir", name: "CSIR", icon: "/favicons/csir.svg" },
+  {
+    key: "tools",
+    name: "Tools",
+    aliases: ["outlook", "teams", "universality", "delta"],
+  },
 ];
 
 export const CATEGORIES: Category[] = [...FACULTIES, ...SITE_CATEGORIES];
@@ -48,9 +54,10 @@ const SITE_ICONS: Record<string, string> = {
   "ehms.pk.edu.pl": "/favicons/ehms.pk.edu.pl.png",
   een: "/favicons/een.png",
   iro: "/favicons/iro.png",
-  sd: "/favicons/SD.svg",
-  szkoladoktorska: "/favicons/SD.svg",
+  outlook: "/favicons/Outlook.svg",
+  teams: "/favicons/Teams.svg",
   transfer: "/favicons/ctt.png",
+  universality: "/favicons/universality.png",
   "www.biblos.pk.edu.pl": "/favicons/www.biblos.pk.edu.pl.png",
 };
 
@@ -69,7 +76,7 @@ export function categoryFor(result: CheckResult): Category | undefined {
 
 export function iconSrcFor(result: CheckResult): string {
   const category = categoryFor(result);
-  if (category) return category.icon;
+  if (category?.icon) return category.icon;
 
   const host = hostOf(result.target);
   const candidates = [result.name ?? "", host, ...host.split(".")];
@@ -78,8 +85,10 @@ export function iconSrcFor(result: CheckResult): string {
     if (icon) return icon;
   }
 
-  // Eclipse keeps its letter fallback until it gets a dedicated icon.
-  if (host.split(".").includes("eclipse")) return `/favicons/${host}.png`;
-
   return PK_ICON;
+}
+
+// Eclipse intentionally has no icon; callers render its letter fallback.
+export function isEclipse(result: CheckResult): boolean {
+  return hostOf(result.target).split(".").includes("eclipse");
 }

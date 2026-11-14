@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { CheckResult } from "../lib/api";
 import { useI18n } from "../lib/i18n";
-import { CATEGORIES, categoryFor, hostOf, iconSrcFor } from "../lib/icons";
-import { setSettingsOpen, setTargetHidden, showAllTargets, useHiddenTargets } from "../lib/settings";
+import { CATEGORIES, categoryFor, iconSrcFor, isEclipse } from "../lib/icons";
+import { hideAllTargets, setSettingsOpen, setTargetHidden, showAllTargets, useHiddenTargets } from "../lib/settings";
 
 interface Group {
   key: string;
@@ -35,6 +35,7 @@ export default function Settings({ results }: { results: CheckResult[] }) {
   const { t } = useI18n();
   const hidden = useHiddenTargets();
   const groups = groupResults(results);
+  const allHidden = results.length > 0 && results.every((result) => hidden.has(result.target));
 
   return (
     <section className="rounded-xl border border-slate-700 bg-slate-800/60 p-6 shadow-lg">
@@ -44,6 +45,14 @@ export default function Settings({ results }: { results: CheckResult[] }) {
           <p className="mt-1 text-sm text-slate-400">{t("settings.description")}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => hideAllTargets(results.map((result) => result.target))}
+            disabled={results.length === 0 || allHidden}
+            className="cursor-pointer rounded-md border border-slate-600 px-3 py-1 text-sm text-slate-300 hover:border-slate-400 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t("settings.hideAll")}
+          </button>
           <button
             type="button"
             onClick={showAllTargets}
@@ -113,7 +122,7 @@ export default function Settings({ results }: { results: CheckResult[] }) {
                               </span>
                             )}
                           </span>
-                          {!hostOf(result.target).split(".").includes("eclipse") && (
+                          {!isEclipse(result) && (
                             <EntryIcon result={result} />
                           )}
                         </label>

@@ -1,7 +1,7 @@
 import type { CheckResult } from "../lib/api";
 import { useState, type ReactNode } from "react";
 import { useI18n } from "../lib/i18n";
-import { hostOf, iconSrcFor } from "../lib/icons";
+import { hostOf, iconSrcFor, isEclipse } from "../lib/icons";
 
 export default function StatusCard({
   result,
@@ -16,7 +16,7 @@ export default function StatusCard({
   return (
     <div className="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-800/60 p-6 shadow-lg">
       <div className="flex items-center gap-3">
-        <Favicon src={iconSrcFor(result)} label={title} />
+        <Favicon src={isEclipse(result) ? undefined : iconSrcFor(result)} label={title} />
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-semibold text-slate-100">
             {title}
@@ -52,10 +52,10 @@ export default function StatusCard({
 
 // Icons are stored as static files in public/favicons. When one is missing,
 // fall back to the first letter of the service name.
-function Favicon({ src, label }: { src: string; label: string }) {
+function Favicon({ src, label }: { src?: string; label: string }) {
   const [failed, setFailed] = useState(false);
 
-  if (failed) {
+  if (!src || failed) {
     return (
       <span
         aria-hidden="true"

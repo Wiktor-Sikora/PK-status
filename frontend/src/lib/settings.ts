@@ -52,6 +52,16 @@ export function showAllTargets() {
   emit();
 }
 
+export function hideAllTargets(targets: Iterable<string>) {
+  hidden = new Set(targets);
+  try {
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hidden]));
+  } catch {
+    // ignore unavailable storage
+  }
+  emit();
+}
+
 export function setSettingsOpen(open: boolean) {
   settingsOpen = open;
   emit();

@@ -44,7 +44,10 @@ services:
         Erasmus=https://erasmus.pk.edu.pl,
         mLegitymacje=https://mlegitymacje.pk.edu.pl,
         Centrum Sportu i Rekreacji=https://csir.pk.edu.pl/,
-        Wirtualny Sekretariat CSIR=https://ws.csir.pk.edu.pl/
+        Wirtualny Sekretariat CSIR=https://ws.csir.pk.edu.pl/,
+        Outlook=https://outlook.cloud.microsoft/,
+        Teams=https://teams.cloud.microsoft/,
+        Universality=https://universality.io/
       POLL_INTERVAL: "60s"
       DB_PATH: "/data/pk-status.db"
       PORT: "8080"

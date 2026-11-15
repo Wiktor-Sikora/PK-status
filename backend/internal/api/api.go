@@ -5,19 +5,25 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Wiktor-Sikora/pk-status/backend/internal/checker"
+	"github.com/Wiktor-Sikora/pk-status/backend/internal/storage"
 )
 
 // Store is the subset of storage the API needs.
 type Store interface {
 	LatestPerTarget() ([]checker.Result, error)
 	History(target string, limit int) ([]checker.Result, error)
+	Uptime(since time.Time, target string) ([]storage.Uptime, error)
 }
 
 const (
 	defaultHistoryLimit = 100
 	maxHistoryLimit     = 1000
+
+	defaultUptimeDays = 30
+	maxUptimeDays     = 365
 )
 
 // Handler builds the HTTP handler exposing the status API. names maps target
@@ -62,6 +68,36 @@ func Handler(store Store, names map[string]string) http.Handler {
 			return
 		}
 		writeJSON(w, http.StatusOK, withNames(results, names, false))
+	})
+
+	mux.HandleFunc("GET /api/uptime", func(w http.ResponseWriter, r *http.Request) {
+		days := defaultUptimeDays
+		if raw := r.URL.Query().Get("days"); raw != "" {
+			if n, err := strconv.Atoi(raw); err == nil && n > 0 {
+				days = n
+			}
+		}
+		if days > maxUptimeDays {
+			days = maxUptimeDays
+		}
+
+		since := time.Now().Add(-time.Duration(days) * 24 * time.Hour)
+		uptimes, err := store.Uptime(since, r.URL.Query().Get("target"))
+		if err != nil {
+			log.Printf("api: uptime: %v", err)
+			writeError(w, http.StatusInternalServerError, "failed to load uptime")
+			return
+		}
+		out := uptimes[:0]
+		for _, u := range uptimes {
+			name, known := names[u.Target]
+			if !known {
+				continue
+			}
+			u.Name = name
+			out = append(out, u)
+		}
+		writeJSON(w, http.StatusOK, out)
 	})
 
 	return mux

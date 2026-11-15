@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoadDefaults(t *testing.T) {
-	for _, key := range []string{"TARGETS", "POLL_INTERVAL", "DB_PATH", "PORT"} {
+	for _, key := range []string{"TARGETS", "POLL_INTERVAL", "DB_PATH", "PORT", "RAW_RETENTION", "HOURLY_RETENTION", "DAILY_RETENTION"} {
 		t.Setenv(key, "")
 	}
 
@@ -26,6 +26,15 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Port != "8080" {
 		t.Errorf("Port = %q, want 8080", cfg.Port)
 	}
+	if cfg.RawRetention != 30*24*time.Hour {
+		t.Errorf("RawRetention = %s, want 720h", cfg.RawRetention)
+	}
+	if cfg.HourlyRetention != 7*24*time.Hour {
+		t.Errorf("HourlyRetention = %s, want 168h", cfg.HourlyRetention)
+	}
+	if cfg.DailyRetention != 365*24*time.Hour {
+		t.Errorf("DailyRetention = %s, want 8760h", cfg.DailyRetention)
+	}
 }
 
 func TestLoadFromEnv(t *testing.T) {
@@ -33,6 +42,9 @@ func TestLoadFromEnv(t *testing.T) {
 	t.Setenv("POLL_INTERVAL", "15s")
 	t.Setenv("DB_PATH", "/tmp/custom.db")
 	t.Setenv("PORT", "9090")
+	t.Setenv("RAW_RETENTION", "168h")
+	t.Setenv("HOURLY_RETENTION", "0")
+	t.Setenv("DAILY_RETENTION", "17520h")
 
 	cfg := Load()
 
@@ -53,6 +65,15 @@ func TestLoadFromEnv(t *testing.T) {
 	}
 	if cfg.Port != "9090" {
 		t.Errorf("Port = %q", cfg.Port)
+	}
+	if cfg.RawRetention != 7*24*time.Hour {
+		t.Errorf("RawRetention = %s, want 168h", cfg.RawRetention)
+	}
+	if cfg.HourlyRetention != 0 {
+		t.Errorf("HourlyRetention = %s, want 0 (never roll up)", cfg.HourlyRetention)
+	}
+	if cfg.DailyRetention != 2*365*24*time.Hour {
+		t.Errorf("DailyRetention = %s, want 17520h", cfg.DailyRetention)
 	}
 }
 

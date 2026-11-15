@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Wiktor-Sikora/pk-status/backend/internal/checker"
+	"github.com/Wiktor-Sikora/pk-status/backend/internal/storage"
 )
 
 type fakeStore struct {
@@ -19,6 +20,16 @@ type fakeStore struct {
 	lastTarget  string
 	lastLimit   int
 	historyCall int
+	uptime      []storage.Uptime
+	uptimeErr   error
+	lastSince   time.Time
+	uptimeTgt   string
+}
+
+func (f *fakeStore) Uptime(since time.Time, target string) ([]storage.Uptime, error) {
+	f.lastSince = since
+	f.uptimeTgt = target
+	return f.uptime, f.uptimeErr
 }
 
 func (f *fakeStore) LatestPerTarget() ([]checker.Result, error) {
@@ -208,5 +219,51 @@ func TestHistoryStoreError(t *testing.T) {
 	body := decode[map[string]string](t, rec)
 	if body["error"] == "" {
 		t.Error("error message is empty")
+	}
+}
+
+func TestUptimeDaysNamesAndFiltering(t *testing.T) {
+	store := &fakeStore{uptime: []storage.Uptime{
+		{Target: "https://a.example", Checks: 10, OKChecks: 9, Percent: 90},
+		{Target: "https://gone.example", Checks: 1, OKChecks: 1, Percent: 100},
+	}}
+	names := map[string]string{"https://a.example": "A"}
+
+	for _, tc := range []struct {
+		query string
+		days  int
+	}{
+		{"", defaultUptimeDays},
+		{"?days=7", 7},
+		{"?days=0", defaultUptimeDays},
+		{"?days=abc", defaultUptimeDays},
+		{"?days=100000", maxUptimeDays},
+	} {
+		before := time.Now()
+		rec := serve(t, store, names, http.MethodGet, "/api/uptime"+tc.query)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%q: status = %d", tc.query, rec.Code)
+		}
+		want := before.Add(-time.Duration(tc.days) * 24 * time.Hour)
+		if d := store.lastSince.Sub(want); d < 0 || d > time.Second {
+			t.Errorf("%q: since = %s, want ~%s", tc.query, store.lastSince, want)
+		}
+		got := decode[[]storage.Uptime](t, rec)
+		if len(got) != 1 || got[0].Name != "A" || got[0].Percent != 90 {
+			t.Errorf("%q: body = %#v, want only named target A", tc.query, got)
+		}
+	}
+
+	serve(t, store, names, http.MethodGet, "/api/uptime?target=https://a.example")
+	if store.uptimeTgt != "https://a.example" {
+		t.Errorf("target = %q, want a.example", store.uptimeTgt)
+	}
+}
+
+func TestUptimeStoreError(t *testing.T) {
+	store := &fakeStore{uptimeErr: errors.New("db down")}
+	rec := serve(t, store, nil, http.MethodGet, "/api/uptime")
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500", rec.Code)
 	}
 }

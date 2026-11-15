@@ -19,6 +19,10 @@ type Config struct {
 	PollInterval time.Duration // how often to check each target
 	DBPath       string        // path to the SQLite file
 	Port         string        // HTTP listen port
+
+	RawRetention    time.Duration // how long raw check results are kept (0 = forever)
+	HourlyRetention time.Duration // how long hourly aggregates are kept before being rolled up into days (0 = never)
+	DailyRetention  time.Duration // how long daily aggregates are kept (0 = forever)
 }
 
 // Load reads configuration from the environment, applying sensible defaults.
@@ -28,6 +32,10 @@ func Load() Config {
 		PollInterval: getDuration("POLL_INTERVAL", 60*time.Second),
 		DBPath:       getenv("DB_PATH", "/data/pk-status.db"),
 		Port:         getenv("PORT", "8080"),
+
+		RawRetention:    getDuration("RAW_RETENTION", 30*24*time.Hour),
+		HourlyRetention: getDuration("HOURLY_RETENTION", 7*24*time.Hour),
+		DailyRetention:  getDuration("DAILY_RETENTION", 365*24*time.Hour),
 	}
 }
 

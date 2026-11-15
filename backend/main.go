@@ -18,8 +18,8 @@ import (
 
 func main() {
 	cfg := config.Load()
-	log.Printf("pk-status: targets=%v interval=%s db=%s port=%s",
-		cfg.Targets, cfg.PollInterval, cfg.DBPath, cfg.Port)
+	log.Printf("pk-status: targets=%v interval=%s db=%s port=%s retention raw=%s hourly=%s daily=%s",
+		cfg.Targets, cfg.PollInterval, cfg.DBPath, cfg.Port, cfg.RawRetention, cfg.HourlyRetention, cfg.DailyRetention)
 
 	store, err := storage.Open(cfg.DBPath)
 	if err != nil {
@@ -32,6 +32,11 @@ func main() {
 
 	scheduler := checker.NewScheduler(cfg.URLs(), cfg.PollInterval, store)
 	go scheduler.Run(ctx)
+	go store.RunRetention(ctx, time.Hour, storage.Retention{
+		Raw:    cfg.RawRetention,
+		Hourly: cfg.HourlyRetention,
+		Daily:  cfg.DailyRetention,
+	})
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,

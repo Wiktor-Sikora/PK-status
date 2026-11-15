@@ -4,9 +4,12 @@
 import { useSyncExternalStore } from "react";
 
 const HIDDEN_KEY = "pk-status-hidden-targets";
+const ORDER_KEY = "pk-status-card-order";
 const EMPTY: ReadonlySet<string> = new Set();
+const EMPTY_ORDER: readonly string[] = [];
 
 let hidden: Set<string> | null = null;
+let order: string[] | null = null;
 let settingsOpen = false;
 const listeners = new Set<() => void>();
 
@@ -65,6 +68,35 @@ export function hideAllTargets(targets: Iterable<string>) {
 export function setSettingsOpen(open: boolean) {
   settingsOpen = open;
   emit();
+}
+
+function loadOrder(): readonly string[] {
+  if (order !== null) return order;
+  if (typeof window === "undefined") return EMPTY_ORDER;
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    order = Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === "string")
+      : [];
+  } catch {
+    order = [];
+  }
+  return order;
+}
+
+export function setCardOrder(next: string[]) {
+  order = next;
+  try {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(next));
+  } catch {
+    // ignore unavailable storage
+  }
+  emit();
+}
+
+export function useCardOrder(): readonly string[] {
+  return useSyncExternalStore(subscribe, loadOrder, () => EMPTY_ORDER);
 }
 
 function subscribe(listener: () => void) {
